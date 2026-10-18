@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 940" width="1280" height="940" style="background:#0b1120; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 950" width="1280" height="950" style="background:#0b1120; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <defs>
     <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#1e293b"/>
@@ -24,6 +24,7 @@
   <!-- ==================== HEADER ==================== -->
   <text x="640" y="45" text-anchor="middle" fill="#f8fafc" font-size="26" font-weight="800" letter-spacing="0.5">DevTriage AI — End-to-End System Architecture</text>
   <text x="640" y="74" text-anchor="middle" fill="#94a3b8" font-size="14">Autonomous, Confidence-Gated Incident Triage Copilot with Active Learning Flywheel (n8n + Pinecone + Gemini 3.5 Flash Lite)</text>
+
 
   <!-- ==================== WORKFLOW 1: KNOWLEDGE INGESTION ==================== -->
   <rect x="40" y="95" width="1200" height="150" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
@@ -67,79 +68,78 @@
 
 
   <!-- ==================== WORKFLOW 2: COPILOT ENGINE ==================== -->
-  <rect x="40" y="275" width="1200" height="375" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect x="40" y="275" width="1200" height="385" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
   <rect x="60" y="265" width="280" height="24" rx="6" fill="#2563eb"/>
   <text x="200" y="281" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700" letter-spacing="0.5">WORKFLOW 2: DEVTRIAGE COPILOT</text>
 
-  <!-- Node 2.1: Incident Form -->
-  <g transform="translate(65, 380)">
-    <rect width="145" height="90" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-    <text x="72" y="32" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">Incident Form</text>
-    <text x="72" y="52" text-anchor="middle" fill="#94a3b8" font-size="11">Webhook / Form</text>
-    <text x="72" y="70" text-anchor="middle" fill="#64748b" font-size="10">Raw Log + Service</text>
+  <!-- Node 2.0: P1 Outage Alert Box (Placed cleanly directly above Safety Gate, ZERO shade/obstruction) -->
+  <g transform="translate(245, 298)">
+    <rect width="200" height="48" rx="8" fill="#991b1b" stroke="#ef4444" stroke-width="2"/>
+    <text x="100" y="20" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="800">🚨 P1 Outage / Secret Alert</text>
+    <text x="100" y="36" text-anchor="middle" fill="#fecaca" font-size="10" font-weight="600">Bypasses AI ➔ Senior On-Call</text>
   </g>
 
-  <path d="M 210 425 L 245 425" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- P1 Bypass Arrow (Goes straight up from Safety Gate into P1 Box) -->
+  <path d="M 345 375 L 345 352" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+  <text x="355" y="365" fill="#f87171" font-size="9" font-weight="800">CRITICAL</text>
+
+  <!-- Node 2.1: Incident Form -->
+  <g transform="translate(65, 385)">
+    <rect width="140" height="90" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+    <text x="70" y="32" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">Incident Form</text>
+    <text x="70" y="52" text-anchor="middle" fill="#94a3b8" font-size="11">Webhook / Form</text>
+    <text x="70" y="70" text-anchor="middle" fill="#64748b" font-size="10">Raw Log + Service</text>
+  </g>
+
+  <path d="M 205 430 L 245 430" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- Node 2.2: Safety Gate -->
-  <g transform="translate(250, 365)">
-    <rect width="185" height="120" rx="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
-    <text x="92" y="26" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="800">Safety Gate (Zero-LLM)</text>
-    <text x="92" y="48" text-anchor="middle" fill="#cbd5e1" font-size="11">- Regex Secret Redaction</text>
-    <text x="92" y="68" text-anchor="middle" fill="#cbd5e1" font-size="11">- P1 Outage Detection</text>
-    <text x="92" y="88" text-anchor="middle" fill="#cbd5e1" font-size="11">- Timestamp Cleaning</text>
-    <text x="92" y="106" text-anchor="middle" fill="#cbd5e1" font-size="10">- Error Sig Extraction</text>
-  </g>
-
-  <!-- P1 Bypass Route (Upwards) -->
-  <path d="M 342 365 L 342 320 L 480 320" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow-red)"/>
-  <rect x="365" y="308" width="85" height="20" rx="4" fill="#450a0a" stroke="#ef4444" stroke-width="1"/>
-  <text x="407" y="322" text-anchor="middle" fill="#f87171" font-size="9" font-weight="700">P1 / LEAK</text>
-
-  <!-- Node 2.3: Critical Alert (Clear of other nodes) -->
-  <g transform="translate(485, 295)">
-    <rect width="215" height="50" rx="8" fill="#450a0a" stroke="#ef4444" stroke-width="1.5"/>
-    <text x="107" y="22" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">P1 Outage / Secret Alert</text>
-    <text x="107" y="38" text-anchor="middle" fill="#fca5a5" font-size="10">Bypasses AI -&gt; Senior On-Call</text>
+  <g transform="translate(250, 375)">
+    <rect width="190" height="120" rx="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+    <text x="95" y="26" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="800">Safety Gate (Zero-LLM)</text>
+    <text x="95" y="48" text-anchor="middle" fill="#cbd5e1" font-size="11">- Regex Secret Redaction</text>
+    <text x="95" y="68" text-anchor="middle" fill="#cbd5e1" font-size="11">- P1 Outage Detection</text>
+    <text x="95" y="88" text-anchor="middle" fill="#cbd5e1" font-size="11">- Timestamp Cleaning</text>
+    <text x="95" y="106" text-anchor="middle" fill="#cbd5e1" font-size="10">- Error Sig Extraction</text>
   </g>
 
   <!-- Safe Log Route to AI Agent -->
-  <path d="M 435 425 L 480 425" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-green)"/>
-  <rect x="442" y="405" width="34" height="18" rx="3" fill="#064e3b"/>
-  <text x="459" y="418" text-anchor="middle" fill="#34d399" font-size="9" font-weight="800">SAFE</text>
+  <path d="M 440 435 L 485 435" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="447" y="415" width="34" height="18" rx="3" fill="#064e3b"/>
+  <text x="464" y="428" text-anchor="middle" fill="#34d399" font-size="9" font-weight="800">SAFE</text>
 
-  <!-- Node 2.4: AI Agent Node -->
-  <g transform="translate(485, 365)">
-    <rect width="215" height="125" rx="12" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+  <!-- Node 2.3: AI Agent Node -->
+  <g transform="translate(490, 370)">
+    <rect width="215" height="130" rx="12" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
     <text x="107" y="28" text-anchor="middle" fill="#c084fc" font-size="13" font-weight="800">AI Agent Node</text>
     <text x="107" y="50" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700">Gemini 3.5 Flash Lite</text>
     <text x="107" y="72" text-anchor="middle" fill="#94a3b8" font-size="11">Tool: search_runbooks</text>
     <text x="107" y="92" text-anchor="middle" fill="#94a3b8" font-size="10">Anti-Hallucination Prompt</text>
-    <text x="107" y="110" text-anchor="middle" fill="#a855f7" font-size="10">Strict JSON Output</text>
+    <text x="107" y="112" text-anchor="middle" fill="#a855f7" font-size="10">Strict JSON Output</text>
   </g>
 
-  <!-- Vector Query Line (Clean route above nodes) -->
-  <path d="M 592 365 L 592 230 L 890 230 L 890 215" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-blue)"/>
-  <rect x="680" y="220" width="130" height="20" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1"/>
-  <text x="745" y="234" text-anchor="middle" fill="#7dd3fc" font-size="9" font-weight="600">Tool: Vector RAG Query</text>
+  <!-- Tool Query Line (Completely unobstructed clear sky path) -->
+  <path d="M 597 370 L 597 220 L 880 220 L 880 215" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-blue)"/>
+  <rect x="680" y="210" width="130" height="20" rx="4" fill="#0c4a6e" stroke="#0284c7" stroke-width="1"/>
+  <text x="745" y="224" text-anchor="middle" fill="#7dd3fc" font-size="9" font-weight="600">Tool: Vector RAG Query</text>
 
   <!-- From AI Agent to Confidence Gate -->
-  <path d="M 700 427 L 740 427" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 705 435 L 745 435" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
 
-  <!-- Node 2.5: Confidence Gate -->
-  <g transform="translate(745, 390)">
+  <!-- Node 2.4: Confidence Gate -->
+  <g transform="translate(750, 395)">
     <rect width="140" height="75" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
     <text x="70" y="32" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="700">Confidence Gate</text>
     <text x="70" y="54" text-anchor="middle" fill="#94a3b8" font-size="11">Score &gt;= 0.70 ?</text>
   </g>
 
   <!-- High Confidence Branch (Green) -->
-  <path d="M 885 410 L 935 370" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-green)"/>
-  <rect x="892" y="375" width="45" height="18" rx="3" fill="#064e3b"/>
-  <text x="914" y="388" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">&gt;=0.70</text>
+  <path d="M 890 415 L 935 375" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="895" y="380" width="45" height="18" rx="3" fill="#064e3b"/>
+  <text x="917" y="393" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">&gt;=0.70</text>
 
-  <!-- Node 2.6: Verified Fix -->
-  <g transform="translate(940, 325)">
+  <!-- Node 2.5: Verified Fix -->
+  <g transform="translate(940, 330)">
     <rect width="190" height="95" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
     <text x="95" y="26" text-anchor="middle" fill="#34d399" font-size="12" font-weight="800">Verified Fix (95%)</text>
     <text x="95" y="46" text-anchor="middle" fill="#a7f3d0" font-size="10">- Instant Resolution</text>
@@ -148,12 +148,12 @@
   </g>
 
   <!-- Low Confidence Branch (Orange/Red) -->
-  <path d="M 885 445 L 935 485" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-red)"/>
-  <rect x="892" y="470" width="45" height="18" rx="3" fill="#451a03"/>
-  <text x="914" y="483" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">&lt; 0.70</text>
+  <path d="M 890 450 L 935 490" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <rect x="895" y="475" width="45" height="18" rx="3" fill="#451a03"/>
+  <text x="917" y="488" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">&lt; 0.70</text>
 
-  <!-- Node 2.7: Low Confidence Escalation -->
-  <g transform="translate(940, 450)">
+  <!-- Node 2.6: Low Confidence Escalation -->
+  <g transform="translate(940, 455)">
     <rect width="190" height="95" rx="10" fill="#451a03" stroke="#f59e0b" stroke-width="2"/>
     <text x="95" y="26" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="800">Low Confidence (25%)</text>
     <text x="95" y="46" text-anchor="middle" fill="#fde68a" font-size="10">- Anti-Hallucination Lock</text>
@@ -163,54 +163,55 @@
 
 
   <!-- ==================== WORKFLOW 3: ACTIVE LEARNING FLYWHEEL ==================== -->
-  <rect x="40" y="680" width="1200" height="230" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
-  <rect x="60" y="670" width="280" height="24" rx="6" fill="#7c3aed"/>
-  <text x="200" y="686" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700" letter-spacing="0.5">WORKFLOW 3: ACTIVE LEARNING FLYWHEEL</text>
+  <rect x="40" y="690" width="1200" height="235" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect x="60" y="680" width="280" height="24" rx="6" fill="#7c3aed"/>
+  <text x="200" y="696" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700" letter-spacing="0.5">WORKFLOW 3: ACTIVE LEARNING FLYWHEEL</text>
 
-  <!-- Clean Escalation Connector Route (Completely avoids all boxes) -->
-  <path d="M 1035 545 L 1035 600 L 155 600 L 155 720" stroke="#c084fc" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-purple)"/>
-  <rect x="480" y="590" width="260" height="20" rx="4" fill="#3b0764" stroke="#9333ea" stroke-width="1"/>
-  <text x="610" y="604" text-anchor="middle" fill="#e9d5ff" font-size="10" font-weight="600">Escalated Incident Sent to Senior Engineer Queue</text>
+  <!-- Escalation Route from Workflow 2 to Workflow 3:
+       Enters safely from the right at x=365, completely clear of the "WORKFLOW 3" title badge at x=60-340! -->
+  <path d="M 1035 550 L 1035 620 L 365 620 L 365 770 L 245 770" stroke="#c084fc" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-purple)"/>
+  <rect x="520" y="610" width="260" height="20" rx="4" fill="#3b0764" stroke="#9333ea" stroke-width="1"/>
+  <text x="650" y="624" text-anchor="middle" fill="#e9d5ff" font-size="10" font-weight="600">Escalated Incident Sent to Senior Engineer Queue</text>
 
   <!-- Node 3.1: Engineer Review Form -->
-  <g transform="translate(65, 725)">
+  <g transform="translate(65, 730)">
     <rect width="180" height="85" rx="10" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
     <text x="90" y="32" text-anchor="middle" fill="#c084fc" font-size="12" font-weight="700">Engineer Review</text>
     <text x="90" y="52" text-anchor="middle" fill="#94a3b8" font-size="11">Inputs Verified Fix</text>
     <text x="90" y="70" text-anchor="middle" fill="#64748b" font-size="10">Postmortem Metadata</text>
   </g>
 
-  <path d="M 245 767 L 305 767" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 245 772 L 305 772" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- Node 3.2: Format Runbook -->
-  <g transform="translate(310, 725)">
+  <g transform="translate(310, 730)">
     <rect width="180" height="85" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
     <text x="90" y="32" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="700">Format Runbook</text>
     <text x="90" y="52" text-anchor="middle" fill="#94a3b8" font-size="11">Standardized Template</text>
     <text x="90" y="70" text-anchor="middle" fill="#64748b" font-size="10">JavaScript Code Node</text>
   </g>
 
-  <path d="M 490 767 L 550 767" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 490 772 L 550 772" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- Node 3.3: Gemini Embeddings -->
-  <g transform="translate(555, 725)">
+  <g transform="translate(555, 730)">
     <rect width="210" height="85" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
     <text x="105" y="32" text-anchor="middle" fill="#c084fc" font-size="12" font-weight="700">Gemini Embeddings</text>
     <text x="105" y="52" text-anchor="middle" fill="#94a3b8" font-size="11">3,072D Vector Generation</text>
   </g>
 
-  <path d="M 765 767 L 825 767" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 765 772 L 825 772" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- Node 3.4: Pinecone Upsert -->
-  <g transform="translate(830, 720)">
+  <g transform="translate(830, 725)">
     <rect width="255" height="95" rx="12" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
     <text x="127" y="32" text-anchor="middle" fill="#34d399" font-size="13" font-weight="800">Pinecone Upsert</text>
     <text x="127" y="52" text-anchor="middle" fill="#a7f3d0" font-size="11" font-weight="600">Auto-Indexed Solution!</text>
     <text x="127" y="72" text-anchor="middle" fill="#94a3b8" font-size="10">System learns autonomously</text>
   </g>
 
-  <!-- Flywheel Return Path (Clean route via far right perimeter) -->
-  <path d="M 1085 767 L 1170 767 L 1170 167 L 1115 167" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6" marker-end="url(#arrow-green)"/>
+  <!-- Flywheel Return Path (Clean outer perimeter on far right) -->
+  <path d="M 1085 772 L 1170 772 L 1170 167 L 1115 167" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6" marker-end="url(#arrow-green)"/>
   <rect x="1105" y="440" width="130" height="24" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
   <text x="1170" y="456" text-anchor="middle" fill="#a7f3d0" font-size="9" font-weight="800">FLYWHEEL RE-INDEX</text>
 </svg>
