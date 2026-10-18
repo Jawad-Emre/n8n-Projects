@@ -75,8 +75,8 @@
   <!-- Node 2.0: P1 Outage Alert Box (Placed cleanly directly above Safety Gate, ZERO shade/obstruction) -->
   <g transform="translate(245, 298)">
     <rect width="200" height="48" rx="8" fill="#991b1b" stroke="#ef4444" stroke-width="2"/>
-    <text x="100" y="20" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="800">🚨 P1 Outage / Secret Alert</text>
-    <text x="100" y="36" text-anchor="middle" fill="#fecaca" font-size="10" font-weight="600">Bypasses AI ➔ Senior On-Call</text>
+    <text x="100" y="20" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="800">P1 Outage / Secret Alert</text>
+    <text x="100" y="36" text-anchor="middle" fill="#fecaca" font-size="10" font-weight="600">Bypasses AI -&gt; Senior On-Call</text>
   </g>
 
   <!-- P1 Bypass Arrow (Goes straight up from Safety Gate into P1 Box) -->

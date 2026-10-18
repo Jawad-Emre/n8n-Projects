@@ -1,55 +1,55 @@
-# DevTriage AI — Architecture Blueprint
+# DevTriage AI: Architecture Blueprint
 
-> **Autonomous, Confidence-Gated Incident Triage Copilot with Active Learning Flywheel**
-> *Engineered in n8n with Pinecone Vector DB & Google Gemini 3.5 Flash Lite*
+> Autonomous, Confidence-Gated Incident Triage Copilot with Active Learning Flywheel  
+> Built with n8n, Pinecone Vector DB, and Google Gemini 3.5 Flash Lite
 
 ---
 
-## 🏛️ System Architecture Diagram
+## System Architecture Diagram
 
 ```mermaid
 flowchart TD
     %% Workflow 1
-    subgraph WF1 ["Workflow 1: Knowledge Ingestion Pipeline"]
-        A1["📄 Company Docs / Runbooks<br/>(Markdown / Notion / Drive)"] --> A2["✂️ Text Splitter Node<br/>(500 chars / 50 overlap)"]
-        A2 --> A3["🧠 Embeddings Google Gemini<br/>(gemini-embedding-001 | 3,072 Dims)"]
-        A3 --> A4["🗄️ Pinecone Vector Store<br/>(Index: devtriage-docs)"]
+    subgraph WF1 [Workflow 1: Knowledge Ingestion Pipeline]
+        A1["Company Docs / Runbooks<br/>(Markdown / Notion / Drive)"] --> A2["Text Splitter Node<br/>(500 chars / 50 overlap)"]
+        A2 --> A3["Embeddings Google Gemini<br/>(gemini-embedding-001 | 3,072 Dims)"]
+        A3 --> A4["Pinecone Vector Store<br/>(Index: devtriage-docs)"]
     end
 
     %% Workflow 2
-    subgraph WF2 ["Workflow 2: Autonomous DevTriage Copilot"]
-        B1["⚡ Incident Trigger<br/>(Form / Webhook / Sentry)"] --> B2["🛡️ Step 1: Deterministic Safety Gate<br/>(Regex Secret Redaction & P1 Filter)"]
+    subgraph WF2 [Workflow 2: Autonomous DevTriage Copilot]
+        B1["Incident Trigger<br/>(Form / Webhook / Sentry)"] --> B2["Step 1: Deterministic Safety Gate<br/>(Regex Secret Redaction & P1 Filter)"]
         
-        B2 --> B3{"🚨 Safety Check:<br/>P1 Outage or Secret Leak?"}
+        B2 --> B3{"Safety Check:<br/>P1 Outage or Secret Leak?"}
         
         %% Safety Gate Branches
-        B3 -- "YES (Critical)" --> B4["🚨 Immediate Slack / PagerDuty Alert<br/>(Zero-LLM Bypass)"]
-        B4 --> B5["🛑 Escalate to Senior On-Call"]
+        B3 -- "YES (Critical)" --> B4["Immediate Slack / PagerDuty Alert<br/>(Zero-LLM Bypass)"]
+        B4 --> B5["Escalate to Senior On-Call"]
         
-        B3 -- "NO (Safe Log)" --> B6["🔍 Clean Log & Extract Signature<br/>(Exception Name + Message)"]
+        B3 -- "NO (Safe Log)" --> B6["Clean Log & Extract Signature<br/>(Exception Name + Message)"]
         
         %% Retrieval
-        B6 --> B7["🤖 Step 2 & 3: AI Agent Node<br/>(Gemini 3.5 Flash Lite)"]
-        B8["🗄️ Pinecone Vector Store Tool<br/>(search_company_runbooks)"] -.->|"Tool Query"| B7
+        B6 --> B7["Step 2 & 3: AI Agent Node<br/>(Gemini 3.5 Flash Lite)"]
+        B8["Pinecone Vector Store Tool<br/>(search_company_runbooks)"] -.->|"Tool Query"| B7
         
         %% Confidence Gate
-        B7 --> B9{"⚖️ Confidence Gate:<br/>Score >= 0.70?"}
+        B7 --> B9{"Confidence Gate:<br/>Score >= 0.70?"}
         
         %% High Confidence
-        B9 -- "YES (>= 0.70)" --> B10["✅ Instant Verified Fix<br/>(Root Cause + Fix + Citations)"]
+        B9 -- "YES (>= 0.70)" --> B10["Instant Verified Fix<br/>(Root Cause + Fix + Citations)"]
         
         %% Low Confidence / Escalation
-        B9 -- "NO (< 0.70)" --> B11["⚠️ Low Confidence Escalation Queue<br/>(Anti-Hallucination Safe Failover)"]
+        B9 -- "NO (< 0.70)" --> B11["Low Confidence Escalation Queue<br/>(Anti-Hallucination Safe Failover)"]
     end
 
     %% Connection to Workflow 3
     B11 -.->|"Routes Unresolved Incident"| C1
 
     %% Workflow 3
-    subgraph WF3 ["Workflow 3: Active Learning Flywheel"]
-        C1["👨‍💻 Senior Engineer Review Form<br/>(Inputs Verified Fix & Cause)"] --> C2["⚙️ Format Postmortem Code Node<br/>(Standardized Runbook Template)"]
-        C2 --> C3["🧠 Embeddings Google Gemini<br/>(3,072 Dims)"]
-        C3 --> C4["🔁 Pinecone Upsert Node<br/>(Auto-Indexed Solution)"]
+    subgraph WF3 [Workflow 3: Active Learning Flywheel]
+        C1["Senior Engineer Review Form<br/>(Inputs Verified Fix & Cause)"] --> C2["Format Postmortem Code Node<br/>(Standardized Runbook Template)"]
+        C2 --> C3["Embeddings Google Gemini<br/>(3,072 Dims)"]
+        C3 --> C4["Pinecone Upsert Node<br/>(Auto-Indexed Solution)"]
     end
 
     %% Flywheel Feedback
@@ -70,24 +70,24 @@ flowchart TD
 
 ---
 
-## ⚙️ The 4 Core Architectural Pillars
+## The Four Core Architectural Pillars
 
 ### 1. Zero-LLM Deterministic Safety Gate
 - Runs prior to any AI model interaction.
 - Uses compiled regex expressions to detect 700+ secret token patterns (OpenAI/Anthropic keys, AWS Access Keys, Bearer Tokens, Database credentials).
 - Intercepts P1 critical outage keywords (`OutOfMemoryError`, `DatabaseConnectionPoolExhausted`, `FATAL_CRASH`, `SIGSEGV`).
-- **Result:** Critical incidents bypass AI for sub-second on-call escalation; credentials are unconditionally sanitized (`[REDACTED_SECRET]`).
+- Outcome: Critical incidents bypass AI for sub-second on-call escalation; credentials are unconditionally sanitized (`[REDACTED_SECRET]`).
 
-### 2. High-Dimensional Hybrid RAG (Pinecone + Gemini)
+### 2. High-Dimensional Hybrid Retrieval (Pinecone + Gemini)
 - Stored across 3,072-dimensional dense vector embeddings generated by Google Gemini.
 - Embeds both standard company runbooks (Stripe, PostgreSQL, Redis) and human-verified postmortems.
-- Allows the AI Agent to perform semantic lookup and exact error code alignment.
+- Enables the AI Agent to perform semantic lookup and exact error code alignment.
 
-### 3. Anti-Hallucination & Mathematical Confidence Gate ($\ge 0.70$)
-- AI Agent powered by **Gemini 3.5 Flash Lite** with strict grounding rules.
+### 3. Anti-Hallucination & Mathematical Confidence Gate (Score >= 0.70)
+- AI Agent powered by Gemini 3.5 Flash Lite with strict grounding rules.
 - Must cite internal runbook titles to justify confidence.
 - If documentation does not cover the incident, the model strictly outputs confidence `< 0.50` (verified at 25%).
-- High-confidence ($\ge 0.70$) outputs instant resolution; low-confidence fails over safely to human engineers.
+- High-confidence (`>= 0.70`) outputs instant resolution; low-confidence fails over safely to human engineers.
 
 ### 4. Active Learning Flywheel (Continuous Learning without Retraining)
 - When a human engineer reviews an escalated incident, the resolution pipeline structures the postmortem and upserts it directly into Pinecone.
