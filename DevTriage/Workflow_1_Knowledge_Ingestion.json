@@ -1,0 +1,171 @@
+{
+  "name": "Workflow_1_Knowledge_Ingestion",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "6841a1bf-3ea7-4437-8e02-1f8353d65857",
+      "name": "When clicking ‘Test Workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      title: \"Stripe Webhook Signature Verification Runbook\",\n      service: \"billing-service\",\n      content: `RUNBOOK: Handling Stripe SignatureVerificationError\nService: billing-service\nSymptoms: Logs show 'stripe.error.SignatureVerificationError: Invalid signature'.\nRoot Cause: The webhook payload signature header does not match the local signing secret, typically caused by secret rotation or reading the request body after it has already been parsed as JSON.\nVerified Fix:\n1. Ensure the raw, unparsed request body (raw bytes/buffer) is passed into stripe.Webhook.construct_event(), NOT the parsed JSON object.\n2. Verify that STRIPE_WEBHOOK_SECRET in environment variables matches the secret in the Stripe Dashboard for this endpoint.\n3. If secrets were rotated, redeploy the billing-service container to reload environment variables.`\n    }\n  },\n  {\n    json: {\n      title: \"PostgreSQL Database Connection Pool Exhaustion\",\n      service: \"database\",\n      content: `RUNBOOK: Fixing OperationalError Connection Pool Exhausted\nService: database / auth-service\nSymptoms: Logs show 'psycopg2.OperationalError: FATAL - remaining connection slots are reserved for non-replication superuser connections' or 'DatabaseConnectionPoolExhausted'.\nRoot Cause: Backend workers or asynchronous queries are opening database connections without closing them or returning them to the pool.\nVerified Fix:\n1. In database.py, verify all database sessions use context managers ('with Session() as session:').\n2. In pg_hba.conf and postgresql.conf, increase max_connections from 100 to 300, and set idle_in_transaction_session_timeout = '60s'.\n3. Deploy PgBouncer in transaction-pooling mode in front of the primary PostgreSQL instance.`\n    }\n  },\n  {\n    json: {\n      title: \"Redis Cluster Connection Timeout Runbook\",\n      service: \"cache-service\",\n      content: `RUNBOOK: Redis Timeout and ETIMEDOUT Errors\nService: cache-service\nSymptoms: Logs show 'redis.exceptions.TimeoutError: Timeout connecting to server' or 'ERR_CONNECTION_REFUSED on port 6379'.\nRoot Cause: Redis cluster nodes are under heavy CPU load, or network security group blocked port 6379, or the client connection timeout is set too low (under 1000ms).\nVerified Fix:\n1. Increase client connection timeout in redis_config.json from 500ms to 5000ms.\n2. Check Redis memory usage with 'INFO memory'. If used_memory is above 90%, enable maxmemory-policy allkeys-lru.\n3. Verify AWS Security Group allows inbound TCP traffic on port 6379 from the application VPC subnet.`\n    }\n  }\n];"
+      },
+      "id": "e7f97091-45ff-4c35-aa4d-ee2b092fc7f5",
+      "name": "Sample Company Runbook",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": "devtriage-docs"
+        },
+        "options": {}
+      },
+      "id": "d8fec3e9-6929-4254-bb4b-2c1921015204",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "dbG3gMBzyKShC1nl",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "a822b697-1435-429e-bcbf-4b230476f303",
+      "name": "Embeddings Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        336,
+        224
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ndZWpd6u5zUgfu2Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "id": "55c7721b-6f0a-4a31-8bcf-8951dc260e0a",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 500,
+        "chunkOverlap": 50,
+        "options": {}
+      },
+      "id": "234c542c-4c9f-48de-a6bf-a46f3c96202e",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        592,
+        432
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test Workflow’": {
+      "main": [
+        [
+          {
+            "node": "Sample Company Runbook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Company Runbook": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "908a8e03-99e1-4c5d-b2be-262a16299b5d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "46ff100d2a57405dbd16fb21809b3ebab7be0d790b01aaf983f87c296ab19bf9"
+  },
+  "nodeGroups": [],
+  "id": "c7pNCVkHoyFfmGYY",
+  "tags": []
+}

@@ -1,0 +1,386 @@
+{
+  "name": "Workflow_2_DevTriage_Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Enter your error logs ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Service Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Raw Error Log",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7deaac21-f110-4a01-9eb0-6ce28941a75f",
+      "name": "logs form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "0c0f8183-7497-4fae-90eb-0752d722add0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get incoming form data\nconst item = $input.first().json;\nconst rawLog = item['Raw Error Log'] || item.raw_log || '';\nconst service = item['Service Name'] || item.service || 'unknown-service';\n\n// --- 1. REGEX SECRET PATTERNS ---\nconst secretPatterns = [\n  { name: 'OpenAI/Anthropic Key', regex: /sk-[a-zA-Z0-9_\\-]{20,}/gi },\n  { name: 'AWS Access Key', regex: /AKIA[0-9A-Z]{16}/g },\n  { name: 'Bearer Token', regex: /Bearer\\s+[a-zA-Z0-9_\\-\\.]{20,}/gi },\n  { name: 'Database Password', regex: /password\\s*[:=]\\s*['\"]?([^\\s'\"]+)['\"]?/gi }\n];\n\nlet sanitizedLog = rawLog;\nlet detectedSecrets = [];\n\n// Redact all secrets deterministically\nfor (const pattern of secretPatterns) {\n  if (pattern.regex.test(sanitizedLog)) {\n    detectedSecrets.push(pattern.name);\n    sanitizedLog = sanitizedLog.replace(pattern.regex, '[REDACTED_SECRET]');\n  }\n}\n\n// --- 2. P1 OUTAGE CRITICAL KEYWORDS ---\nconst p1Keywords = [\n  'OutOfMemoryError',\n  'DatabaseConnectionPoolExhausted',\n  'FATAL_CRASH',\n  'SystemExit',\n  'SIGSEGV',\n  'DataCorruptionError'\n];\n\nlet detectedP1s = [];\nfor (const keyword of p1Keywords) {\n  if (new RegExp(keyword, 'i').test(rawLog)) {\n    detectedP1s.push(keyword);\n  }\n}\n\n// --- 3. CLEAN NOISE & EXTRACT SIGNATURE ---\n// Remove timestamps and memory addresses from cleaned log\nconst cleanNoisyLog = sanitizedLog\n  .replace(/\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z?/g, '')\n  .replace(/0x[0-9a-fA-F]{6,16}/g, '');\n\nconst lines = cleanNoisyLog.split('\\n').map(l => l.trim()).filter(l => l.length > 0);\nconst errorSignature = lines.length > 0 ? (lines[lines.length - 1] || lines[0]) : 'Unknown error';\n\nconst isCritical = detectedSecrets.length > 0 || detectedP1s.length > 0;\n\nreturn {\n  service: service,\n  is_critical: isCritical,\n  is_p1: detectedP1s.length > 0,\n  p1_reasons: detectedP1s,\n  has_secret_leak: detectedSecrets.length > 0,\n  leaked_secret_types: detectedSecrets,\n  sanitized_log: cleanNoisyLog,\n  error_signature: errorSignature\n};"
+      },
+      "id": "8e3d1b79-8310-4772-baf1-ed2a0982f509",
+      "name": "Code Node",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dace836a-ecde-40fd-8dd2-39cf87568e2e",
+              "leftValue": "={{ $json.is_critical }}",
+              "rightValue": "={{ $json.is_critical }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "438abccd-10c8-4d45-98a9-e4c5dde866ae",
+      "name": "Safety Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Critical",
+        "completionMessage": "=🚨 CRITICAL INCIDENT DETECTED!\n- P1 Outage Detected: {{ $json.is_p1 ? $json.p1_reasons.join(', ') : 'None' }}\n- Leaked Secrets Intercepted: {{ $json.has_secret_leak ? $json.leaked_secret_types.join(', ') : 'None' }}\n\n⚠️ This incident has bypassed AI and been escalated directly to the Senior On-Call Engineer.",
+        "options": {}
+      },
+      "id": "2b37e9ac-2734-498c-a825-8e03cae3618f",
+      "name": "🚨 Critical P1 or Leak",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        672,
+        -80
+      ],
+      "webhookId": "d3d8fcc0-ff28-41d1-9a76-cb58321b9dcd"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this error and find the solution from the internal company runbooks:\nService: {{ $json.service }}\nError Signature: {{ $json.error_signature }}\nSanitized Log: {{ $json.sanitized_log }}",
+        "options": {
+          "systemMessage": "You are DevTriage AI, an autonomous incident copilot.\n1. Search the company runbooks tool for solutions matching the error.\n2. If a retrieved runbook directly solves this error:\n   - Set confidence_score to a float between 0.75 and 0.98.\n   - Provide the root cause and exact fix steps.\n   - Cite the runbook title.\n3. If NO runbook solves this error, or if you are unsure:\n   - Set confidence_score to a float STRICTLY BELOW 0.50 (e.g., 0.25).\n   - State that no verified runbook exists. DO NOT GUESS OR INVENT A FIX.\n4. ALWAYS respond ONLY in valid JSON matching this exact structure:\n{\n  \"root_cause\": \"short explanation\",\n  \"suggested_fix\": \"step by step fix\",\n  \"citations\": [\"Runbook Title\"],\n  \"confidence_score\": 0.85,\n  \"reason_for_confidence\": \"Matches the Stripe webhook runbook exactly\"\n}"
+        }
+      },
+      "id": "56e04615-0684-4fd1-bfcf-f88a5ab27861",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        816,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "id": "f7f43548-f1e0-4d30-9d81-6709edc87938",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        336
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ndZWpd6u5zUgfu2Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Searches company documentation and runbooks for verified fixes to error logs.",
+        "pineconeIndex": {
+          "__rl": true,
+          "mode": "list",
+          "value": "devtriage-docs"
+        },
+        "options": {}
+      },
+      "id": "acaa25ba-aab5-43ef-8ca4-7845b1aef4b3",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        272
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "dbG3gMBzyKShC1nl",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "f23038af-eaf8-4545-9a41-acf404014a04",
+      "name": "Embeddings Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        464
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ndZWpd6u5zUgfu2Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.output || '';\nlet parsed;\ntry {\n  // Strip any accidental markdown backticks like ```json ... ```\n  const clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();\n  parsed = JSON.parse(clean);\n} catch (e) {\n  parsed = {\n    confidence_score: 0.20,\n    root_cause: \"Unknown / Parse failure\",\n    suggested_fix: text,\n    citations: [],\n    reason_for_confidence: \"AI response was not valid JSON\"\n  };\n}\n\nreturn parsed;"
+      },
+      "id": "26cdbf08-5556-4521-9a8e-e453ee52255e",
+      "name": "JSON Parser",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "02075ddb-3b75-45c6-896d-bea0a61ac471",
+              "leftValue": "={{ $json.confidence_score }}",
+              "rightValue": 0.7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "feba12f6-0a7b-4120-acfd-093d5ced04c8",
+      "name": "Confidence Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "High Confidence",
+        "completionMessage": "=✅ VERIFIED FIX FOUND (Confidence: {{ Math.round($json.confidence_score * 100) }}%)\n\n📌 Citations: {{ $json.citations.join(', ') }}\n\n🔍 Root Cause:\n{{ $json.root_cause }}\n\n🛠️ Suggested Fix:\n{{ $json.suggested_fix }}",
+        "options": {}
+      },
+      "id": "da3deac5-1cc2-425b-a709-3cc3a48697d3",
+      "name": "Verified High Confidence Fix",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1664,
+        -192
+      ],
+      "webhookId": "ee87878c-09e8-4c28-a3d1-7dc09e377153"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Low Confidence",
+        "completionMessage": "=⚠️ LOW CONFIDENCE INCIDENT (Confidence: {{ Math.round($json.confidence_score * 100) }}%)\n\n🚨 Action: Escalated to Senior Human Engineer Queue.\nReason: {{ $json.reason_for_confidence }}\n\nNo verified company runbook exists for this error. Automated fix blocked to prevent hallucinations.",
+        "options": {}
+      },
+      "id": "aa694c0d-6212-4d61-b5e7-42f9e62fe925",
+      "name": "Low Confidence Escalation",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1664,
+        0
+      ],
+      "webhookId": "78961618-afe7-41b9-98d5-22fd027fc976"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "logs form": {
+      "main": [
+        [
+          {
+            "node": "Code Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Node": {
+      "main": [
+        [
+          {
+            "node": "Safety Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safety Gate": {
+      "main": [
+        [
+          {
+            "node": "🚨 Critical P1 or Leak",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "JSON Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser": {
+      "main": [
+        [
+          {
+            "node": "Confidence Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confidence Gate": {
+      "main": [
+        [
+          {
+            "node": "Verified High Confidence Fix",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Low Confidence Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "adea6c16-5d58-4df6-92b3-c01ddd024293",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "46ff100d2a57405dbd16fb21809b3ebab7be0d790b01aaf983f87c296ab19bf9"
+  },
+  "nodeGroups": [],
+  "id": "2uMygPqF9Oacz4KQ",
+  "tags": []
+}
